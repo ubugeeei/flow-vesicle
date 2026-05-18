@@ -9,6 +9,7 @@ import {
   arrayOps,
   field,
   inputTypeFor,
+  useUnsavedChangesGuard,
   useVesicle,
   useVesicleAction,
   useVesicleOptimistic,
@@ -553,6 +554,104 @@ test("vesicleFromMutation requires endpoint or fetch", () => {
       fields: { name: field.text() },
     });
   }).toThrow("requires either `endpoint` or `fetch`");
+});
+
+test("useUnsavedChangesGuard prevents click navigation while the form is dirty", async () => {
+  const def = vesicle({
+    fields: { title: field.text() },
+    initial: { title: "draft" },
+  });
+
+  const handleRef = { current: null };
+  const confirmCalls = [];
+
+  function Probe() {
+    const handle = useVesicle(def);
+    handleRef.current = handle;
+    useUnsavedChangesGuard(handle, {
+      confirm: (message) => {
+        confirmCalls.push(message);
+        return false;
+      },
+    });
+    return null;
+  }
+
+  const { container, unmount } = await renderAndCapture(React.createElement(Probe));
+  try {
+    const anchor = document.createElement("a");
+    anchor.href = "/elsewhere";
+    container.appendChild(anchor);
+
+    handleRef.current.fields.title.set("renamed");
+    expect(handleRef.current.dirty.get()).toBe(true);
+
+    const evt = new window.MouseEvent("click", { bubbles: true, cancelable: true });
+    anchor.dispatchEvent(evt);
+    expect(confirmCalls.length).toBe(1);
+    expect(evt.defaultPrevented).toBe(true);
+  } finally {
+    unmount();
+  }
+});
+
+test("useUnsavedChangesGuard ignores clicks while the form is clean", async () => {
+  const def = vesicle({
+    fields: { title: field.text() },
+    initial: { title: "draft" },
+  });
+
+  const confirmCalls = [];
+
+  function Probe() {
+    const handle = useVesicle(def);
+    useUnsavedChangesGuard(handle, {
+      confirm: (message) => {
+        confirmCalls.push(message);
+        return false;
+      },
+    });
+    return null;
+  }
+
+  const { container, unmount } = await renderAndCapture(React.createElement(Probe));
+  try {
+    const anchor = document.createElement("a");
+    anchor.href = "/elsewhere";
+    container.appendChild(anchor);
+    const evt = new window.MouseEvent("click", { bubbles: true, cancelable: true });
+    anchor.dispatchEvent(evt);
+    expect(confirmCalls).toEqual([]);
+    expect(evt.defaultPrevented).toBe(false);
+  } finally {
+    unmount();
+  }
+});
+
+test("useUnsavedChangesGuard's beforeunload returns the message string when dirty", async () => {
+  const def = vesicle({
+    fields: { title: field.text() },
+    initial: { title: "draft" },
+  });
+
+  const handleRef = { current: null };
+
+  function Probe() {
+    const handle = useVesicle(def);
+    handleRef.current = handle;
+    useUnsavedChangesGuard(handle, { message: "Wait!" });
+    return null;
+  }
+
+  const { unmount } = await renderAndCapture(React.createElement(Probe));
+  try {
+    handleRef.current.fields.title.set("dirty");
+    const event = new window.Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.returnValue).toBe("Wait!");
+  } finally {
+    unmount();
+  }
 });
 
 test("useVesicleAction keeps previous state when the action throws", async () => {

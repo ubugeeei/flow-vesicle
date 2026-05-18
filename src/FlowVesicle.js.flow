@@ -293,3 +293,15 @@ declare export function useFormStatus(): {
   +action: ?(string | (FormData) => Promise<mixed> | mixed),
 };
 declare export function SubmitButton(props: SubmitButtonProps): React.Node;
+
+export type UnsavedChangesGuardOptions<F: FieldDescriptors, TResult> = {
+  +enabled?: boolean,
+  +message?: string,
+  +blockWhen?: (handle: VesicleHandle<F, TResult>) => boolean,
+  +interceptLinks?: boolean,
+  +confirm?: (message: string) => boolean | Promise<boolean>,
+};
+declare export function useUnsavedChangesGuard<F: FieldDescriptors, TResult>(
+  handle: VesicleHandle<F, TResult>,
+  options?: UnsavedChangesGuardOptions<F, TResult>,
+): void;

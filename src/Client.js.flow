@@ -25,6 +25,10 @@ declare export function useVesicleOptimistic<F, TResult, TPatch = any>(
   handle: any,
   reducer?: (current: any, optimistic: TPatch) => any,
 ): [any, (patch: TPatch) => void];
+declare export function useUnsavedChangesGuard<F, TResult>(
+  handle: any,
+  options?: any,
+): void;
 declare export function useFormStatus(): {
   +pending: boolean,
   +data: ?FormData,
