@@ -10,7 +10,8 @@ export type FieldKind =
   | "email"
   | "password"
   | "date"
-  | "url";
+  | "url"
+  | "array";
 
 export type FieldOptions = {
   +required?: boolean,
@@ -37,6 +38,7 @@ export type FieldDescriptors = { +[string]: FieldDescriptor<mixed> };
 
 declare export var field: any;
 declare export function inputTypeFor(kind: FieldKind): string;
+declare export function arrayOps<T>(handle: any): any;
 declare export function objectFromFormData(formData: FormData): { [string]: mixed };
 declare export function readFormPayload(input: mixed): { [string]: mixed };
 declare export function buildFormData(values: { +[string]: mixed }): FormData;

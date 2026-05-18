@@ -4,6 +4,7 @@ import * as React from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  arrayOps,
   field,
   inputTypeFor,
   useVesicle,
@@ -46,6 +47,80 @@ test("field.checkbox normalizes truthy strings to boolean", () => {
   expect(d.serialize(false)).toBe("");
 });
 
+test("field.array round-trips through parse/serialize with item descriptor", () => {
+  const d = field.array(field.number());
+  expect(d.kind).toBe("array");
+  expect(d.empty()).toEqual([]);
+  expect(d.parse(["1", "2", "3"])).toEqual([1, 2, 3]);
+  expect(d.parse("5")).toEqual([5]);
+  expect(d.parse(null)).toEqual([]);
+  expect(d.parse("")).toEqual([]);
+  expect(d.serialize([1, 2, 3])).toEqual(["1", "2", "3"]);
+});
+
+test("arrayOps push / removeAt / move / replaceAt / clear keep value in sync", () => {
+  const def = vesicle({
+    fields: { tags: field.array(field.text()) },
+    initial: { tags: ["a", "b"] },
+  });
+  const handle = def.bind();
+  const ops = arrayOps(handle.fields.tags);
+
+  ops.push("c");
+  expect(handle.values.get().tags).toEqual(["a", "b", "c"]);
+
+  ops.insertAt(1, "x");
+  expect(handle.values.get().tags).toEqual(["a", "x", "b", "c"]);
+
+  ops.move(0, 2);
+  expect(handle.values.get().tags).toEqual(["x", "b", "a", "c"]);
+
+  ops.replaceAt(0, "X");
+  expect(handle.values.get().tags).toEqual(["X", "b", "a", "c"]);
+
+  ops.removeAt(2);
+  expect(handle.values.get().tags).toEqual(["X", "b", "c"]);
+
+  ops.clear();
+  expect(handle.values.get().tags).toEqual([]);
+});
+
+test("arrayOps guards against out-of-range indices", () => {
+  const def = vesicle({
+    fields: { tags: field.array(field.text()) },
+    initial: { tags: ["a"] },
+  });
+  const handle = def.bind();
+  const ops = arrayOps(handle.fields.tags);
+
+  ops.removeAt(99);
+  ops.replaceAt(-1, "z");
+  ops.move(7, 0);
+  expect(handle.values.get().tags).toEqual(["a"]);
+
+  ops.insertAt(99, "z");
+  expect(handle.values.get().tags).toEqual(["a", "z"]);
+});
+
+test("vesicle.action populates an array field from duplicate FormData keys", async () => {
+  let captured = null;
+  const def = vesicle({
+    fields: { tags: field.array(field.text()) },
+    action: async (formData) => {
+      captured = formData.getAll("tags");
+      return null;
+    },
+  });
+  const handle = def.bind();
+  const fd = new FormData();
+  fd.append("tags", "a");
+  fd.append("tags", "b");
+  fd.append("tags", "c");
+  await handle.action(fd);
+  expect(captured).toEqual(["a", "b", "c"]);
+  expect(handle.values.get().tags).toEqual(["a", "b", "c"]);
+});
+
 test("inputTypeFor maps every field kind to a DOM-valid input type", () => {
   expect(inputTypeFor("text")).toBe("text");
   expect(inputTypeFor("textarea")).toBe("text");
@@ -57,6 +132,7 @@ test("inputTypeFor maps every field kind to a DOM-valid input type", () => {
   expect(inputTypeFor("password")).toBe("password");
   expect(inputTypeFor("date")).toBe("date");
   expect(inputTypeFor("url")).toBe("url");
+  expect(inputTypeFor("array")).toBe("text");
 });
 
 test("vesicle binds initial values and derives dirty/valid/values cells", () => {

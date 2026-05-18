@@ -1,8 +1,11 @@
 /* @flow strict */
 
 import type {
+  ArrayFieldDescriptor,
+  ArrayFieldOps,
   Field,
   FieldDescriptor,
+  FieldHandle,
   FieldKind,
   FieldOptions,
 } from "./Types";
@@ -146,7 +149,84 @@ export const field: Field = Object.freeze({
     textSerialize,
     emptyString,
   ),
+  array: <T>(
+    item: FieldDescriptor<T>,
+    options?: FieldOptions,
+  ): ArrayFieldDescriptor<T> => {
+    const parseList = (raw: mixed): Array<T> => {
+      if (raw == null || raw === "") {
+        return [];
+      }
+      if (Array.isArray(raw)) {
+        return raw.map((entry) => item.parse(entry));
+      }
+      return [item.parse(raw)];
+    };
+    const serializeList = (value: Array<T>): mixed => value.map((entry) => item.serialize(entry));
+    const emptyList = (): Array<T> => [];
+    const desc: ArrayFieldDescriptor<T> = Object.freeze({
+      kind: "array",
+      item,
+      options: Object.freeze({ ...(options ?? {}) }),
+      parse: parseList,
+      serialize: serializeList,
+      empty: emptyList,
+    });
+    return desc;
+  },
 });
+
+export function arrayOps<T>(handle: FieldHandle<Array<T>>): ArrayFieldOps<T> {
+  const readCurrent = (): Array<T> => {
+    const value = handle.value.get();
+    return Array.isArray(value) ? value.slice() : [];
+  };
+  return Object.freeze({
+    push(item: T): void {
+      const next = readCurrent();
+      next.push(item);
+      handle.set(next);
+    },
+    insertAt(index: number, item: T): void {
+      const next = readCurrent();
+      const at = Math.max(0, Math.min(index, next.length));
+      next.splice(at, 0, item);
+      handle.set(next);
+    },
+    removeAt(index: number): void {
+      const next = readCurrent();
+      if (index < 0 || index >= next.length) {
+        return;
+      }
+      next.splice(index, 1);
+      handle.set(next);
+    },
+    move(from: number, to: number): void {
+      const next = readCurrent();
+      if (from < 0 || from >= next.length) {
+        return;
+      }
+      const target = Math.max(0, Math.min(to, next.length - 1));
+      if (target === from) {
+        return;
+      }
+      const [item] = next.splice(from, 1);
+      next.splice(target, 0, item);
+      handle.set(next);
+    },
+    replaceAt(index: number, item: T): void {
+      const next = readCurrent();
+      if (index < 0 || index >= next.length) {
+        return;
+      }
+      next[index] = item;
+      handle.set(next);
+    },
+    clear(): void {
+      handle.set([]);
+    },
+  });
+}
 
 export function inputTypeFor(kind: FieldKind): string {
   switch (kind) {
@@ -160,6 +240,7 @@ export function inputTypeFor(kind: FieldKind): string {
     case "password": return "password";
     case "date": return "date";
     case "url": return "url";
+    case "array": return "text";
     default: return "text";
   }
 }

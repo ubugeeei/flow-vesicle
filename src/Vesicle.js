@@ -143,6 +143,9 @@ class FieldHandleImpl<T> implements FieldHandle<T> {
     }
     if (this.kind === "checkbox") {
       base.defaultChecked = Boolean(initial);
+    } else if (this.kind === "array") {
+      // Arrays don't map to a single <input>; consumers render per-item
+      // controls and use FieldArrayHandle.itemInput(index, value).
     } else if (this.kind === "hidden") {
       const serialized = this._descriptor.serialize(initial);
       if (serialized != null) {
