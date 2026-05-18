@@ -2,6 +2,8 @@
 
 export type {
   ActionFn,
+  ArrayFieldDescriptor,
+  ArrayFieldOps,
   Errors,
   Field,
   FieldDescriptor,
@@ -26,7 +28,7 @@ export type {
   VesicleHandle,
 } from "./Types";
 
-export { field, inputTypeFor } from "./Field";
+export { arrayOps, field, inputTypeFor } from "./Field";
 export {
   buildFormData,
   objectFromFormData,

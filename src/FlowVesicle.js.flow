@@ -12,7 +12,8 @@ export type FieldKind =
   | "email"
   | "password"
   | "date"
-  | "url";
+  | "url"
+  | "array";
 
 export type FieldOptions = {
   +required?: boolean,
@@ -33,6 +34,24 @@ export type FieldDescriptor<T> = {
   +parse: (raw: mixed) => T,
   +serialize: (value: T) => mixed,
   +empty: () => T,
+};
+
+export type ArrayFieldDescriptor<T> = {
+  +kind: "array",
+  +item: FieldDescriptor<T>,
+  +options: FieldOptions,
+  +parse: (raw: mixed) => Array<T>,
+  +serialize: (value: Array<T>) => mixed,
+  +empty: () => Array<T>,
+};
+
+export type ArrayFieldOps<T> = {
+  +push: (item: T) => void,
+  +insertAt: (index: number, item: T) => void,
+  +removeAt: (index: number) => void,
+  +move: (from: number, to: number) => void,
+  +replaceAt: (index: number, item: T) => void,
+  +clear: () => void,
 };
 
 export type FieldDescriptors = { +[string]: FieldDescriptor<mixed> };
@@ -158,6 +177,7 @@ export type Field = {
   +password: (options?: FieldOptions) => FieldDescriptor<string>,
   +date: (options?: FieldOptions) => FieldDescriptor<string>,
   +url: (options?: FieldOptions) => FieldDescriptor<string>,
+  +array: <T>(item: FieldDescriptor<T>, options?: FieldOptions) => ArrayFieldDescriptor<T>,
 };
 
 export type SubmitButtonProps = {
@@ -187,6 +207,7 @@ export type OptimisticReducer<F: FieldDescriptors, TPatch> = (
 
 declare export var field: Field;
 declare export function inputTypeFor(kind: FieldKind): string;
+declare export function arrayOps<T>(handle: FieldHandle<Array<T>>): ArrayFieldOps<T>;
 declare export function objectFromFormData(formData: FormData): { [string]: mixed };
 declare export function readFormPayload(input: mixed): { [string]: mixed };
 declare export function buildFormData(values: { +[string]: mixed }): FormData;

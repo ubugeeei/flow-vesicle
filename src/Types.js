@@ -17,7 +17,8 @@ export type FieldKind =
   | "email"
   | "password"
   | "date"
-  | "url";
+  | "url"
+  | "array";
 
 export type FieldOptions = {
   +required?: boolean,
@@ -38,6 +39,24 @@ export type FieldDescriptor<T> = {
   +parse: (raw: mixed) => T,
   +serialize: (value: T) => mixed,
   +empty: () => T,
+};
+
+export type ArrayFieldDescriptor<T> = {
+  +kind: "array",
+  +item: FieldDescriptor<T>,
+  +options: FieldOptions,
+  +parse: (raw: mixed) => Array<T>,
+  +serialize: (value: Array<T>) => mixed,
+  +empty: () => Array<T>,
+};
+
+export type ArrayFieldOps<T> = {
+  +push: (item: T) => void,
+  +insertAt: (index: number, item: T) => void,
+  +removeAt: (index: number) => void,
+  +move: (from: number, to: number) => void,
+  +replaceAt: (index: number, item: T) => void,
+  +clear: () => void,
 };
 
 export type FieldDescriptors = {
@@ -178,6 +197,7 @@ export type Field = {
   +password: (options?: FieldOptions) => FieldDescriptor<string>,
   +date: (options?: FieldOptions) => FieldDescriptor<string>,
   +url: (options?: FieldOptions) => FieldDescriptor<string>,
+  +array: <T>(item: FieldDescriptor<T>, options?: FieldOptions) => ArrayFieldDescriptor<T>,
 };
 
 export type SubmitButtonProps = {

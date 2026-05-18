@@ -28,6 +28,7 @@ function smoke() {
   expectKeys(
     main,
     [
+      "arrayOps",
       "field",
       "inputTypeFor",
       "vesicle",
@@ -37,7 +38,9 @@ function smoke() {
       "SubmitButton",
       "useFormStatus",
       "useVesicle",
+      "useVesicleAction",
       "useVesicleDirty",
+      "useVesicleOptimistic",
       "useVesiclePending",
       "useVesicleValid",
       "useVesicleValues",
@@ -48,6 +51,7 @@ function smoke() {
   expectKeys(
     server,
     [
+      "arrayOps",
       "field",
       "inputTypeFor",
       "vesicle",
@@ -64,7 +68,9 @@ function smoke() {
       "SubmitButton",
       "useFormStatus",
       "useVesicle",
+      "useVesicleAction",
       "useVesicleDirty",
+      "useVesicleOptimistic",
       "useVesiclePending",
       "useVesicleValid",
       "useVesicleValues",
@@ -86,6 +92,16 @@ function smoke() {
   handle.fields.title.set("hello");
   assert.equal(handle.values.get().title, "hello");
   assert.equal(handle.dirty.get(), true);
+
+  const repeat = main.vesicle({
+    fields: { tags: main.field.array(main.field.text()) },
+    initial: { tags: ["red"] },
+  }).bind();
+  const ops = main.arrayOps(repeat.fields.tags);
+  ops.push("blue");
+  ops.insertAt(0, "green");
+  ops.removeAt(2);
+  assert.deepEqual(repeat.values.get().tags, ["green", "red"]);
 
   const formData = main.buildFormData({ a: "1", flag: true, list: ["x", "y"] });
   assert.equal(formData.get("a"), "1");
