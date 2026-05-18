@@ -15,21 +15,24 @@ export function objectFromFormData(
   return result;
 }
 
+function isHTMLFormElement(value: mixed): boolean {
+  return (
+    typeof HTMLFormElement !== "undefined"
+    && value instanceof HTMLFormElement
+  );
+}
+
 export function readFormPayload(input: mixed): { [string]: mixed } {
   if (typeof FormData !== "undefined" && input instanceof FormData) {
     return objectFromFormData(input);
   }
   if (input != null && typeof input === "object") {
     const event = input as $FlowFixMe;
-    if (
-      event.currentTarget != null &&
-      typeof event.currentTarget === "object" &&
-      event.currentTarget instanceof globalThis.HTMLFormElement
-    ) {
+    if (event.currentTarget != null && isHTMLFormElement(event.currentTarget)) {
       const form = event.currentTarget as $FlowFixMe;
       return objectFromFormData(new FormData(form));
     }
-    if (event.target != null && event.target instanceof globalThis.HTMLFormElement) {
+    if (event.target != null && isHTMLFormElement(event.target)) {
       const form = event.target as $FlowFixMe;
       return objectFromFormData(new FormData(form));
     }

@@ -20,10 +20,10 @@ import type {
   FieldHandles,
   FieldInput,
   FieldOptions,
+  FieldValues,
   FormState,
   OptimisticFn,
   ValidatorFn,
-  Values,
   Vesicle,
   VesicleBoundHandle,
   VesicleConfig,
@@ -63,7 +63,7 @@ function deriveCell<R>(
 
 class FieldHandleImpl<T> implements FieldHandle<T> {
   name: string;
-  kind: $ElementType<FieldDescriptor<T>, "kind">;
+  kind: FieldDescriptor<T>["kind"];
   options: FieldOptions;
   _descriptor: FieldDescriptor<T>;
   _initial: T;
@@ -163,7 +163,7 @@ class VesicleInstance<F: FieldDescriptors, TResult> implements VesicleHandle<F, 
   _config: VesicleConfig<F, TResult>;
   fields: FieldHandles<F>;
   _fieldList: Array<FieldHandleImpl<mixed>>;
-  values: Cell<Values<F>>;
+  values: Cell<FieldValues<F>>;
   errors: Cell<Errors<F>>;
   touched: Cell<{ [name: string]: boolean }>;
   dirty: Cell<boolean>;
@@ -174,7 +174,7 @@ class VesicleInstance<F: FieldDescriptors, TResult> implements VesicleHandle<F, 
 
   constructor(
     config: VesicleConfig<F, TResult>,
-    overrides?: { +initial?: $Shape<Values<F>>, +permalink?: string },
+    overrides?: { +initial?: Partial<FieldValues<F>>, +permalink?: string },
   ): void {
     this.id = vesicleKey();
     this._config = config;
@@ -200,16 +200,16 @@ class VesicleInstance<F: FieldDescriptors, TResult> implements VesicleHandle<F, 
     const errorSources: Array<Readable<mixed>> = fieldList.map(f => f.error);
     const touchedSources: Array<Readable<mixed>> = fieldList.map(f => f.touched);
 
-    this.values = deriveCell<Values<F>>(
+    this.values = deriveCell<FieldValues<F>>(
       valueSources,
       () => {
         const out: { [string]: mixed } = {};
         for (const handle of fieldList) {
           out[handle.name] = handle.value.get();
         }
-        return out as $FlowFixMe as Values<F>;
+        return out as $FlowFixMe as FieldValues<F>;
       },
-      initialValues as $FlowFixMe as Values<F>,
+      initialValues as $FlowFixMe as FieldValues<F>,
       `${this.id}.values`,
     );
     this.errors = deriveCell<Errors<F>>(
@@ -221,7 +221,7 @@ class VesicleInstance<F: FieldDescriptors, TResult> implements VesicleHandle<F, 
         }
         return out as $FlowFixMe as Errors<F>;
       },
-      ({}: $FlowFixMe),
+      ({} as $FlowFixMe),
       `${this.id}.errors`,
     );
     this.touched = deriveCell<{ [name: string]: boolean }>(
@@ -233,7 +233,7 @@ class VesicleInstance<F: FieldDescriptors, TResult> implements VesicleHandle<F, 
         }
         return out;
       },
-      ({}: $FlowFixMe),
+      ({} as $FlowFixMe),
       `${this.id}.touched`,
     );
     this.dirty = deriveCell<boolean>(
@@ -305,7 +305,7 @@ class VesicleInstance<F: FieldDescriptors, TResult> implements VesicleHandle<F, 
     return () => this.dirty.get();
   }
 
-  bind(overrides?: { +initial?: $Shape<Values<F>>, +permalink?: string }): VesicleBoundHandle<F, TResult> {
+  bind(overrides?: { +initial?: Partial<FieldValues<F>>, +permalink?: string }): VesicleBoundHandle<F, TResult> {
     return new VesicleInstance<F, TResult>(this._config, overrides);
   }
 
@@ -393,7 +393,7 @@ class VesicleDefinition<F: FieldDescriptors, TResult> {
   }
 
   create(
-    overrides?: { +initial?: $Shape<Values<F>>, +permalink?: string },
+    overrides?: { +initial?: Partial<FieldValues<F>>, +permalink?: string },
   ): VesicleInstance<F, TResult> {
     const instance = new VesicleInstance<F, TResult>(this.config, overrides);
     this._current = instance;
@@ -402,7 +402,7 @@ class VesicleDefinition<F: FieldDescriptors, TResult> {
   }
 
   bind(
-    overrides?: { +initial?: $Shape<Values<F>>, +permalink?: string },
+    overrides?: { +initial?: Partial<FieldValues<F>>, +permalink?: string },
   ): VesicleInstance<F, TResult> {
     return this.create(overrides);
   }

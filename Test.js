@@ -17,6 +17,20 @@ const flowPreset = [
   },
 ];
 
+const ALWAYS_OVERRIDE = new Set([
+  "FormData",
+  "HTMLFormElement",
+  "HTMLElement",
+  "HTMLInputElement",
+  "HTMLTextAreaElement",
+  "HTMLSelectElement",
+  "HTMLOptionElement",
+  "HTMLButtonElement",
+  "Event",
+  "Element",
+  "Node",
+]);
+
 function installDom(Window) {
   const window = new Window({ url: "http://localhost/" });
 
@@ -25,7 +39,7 @@ function installDom(Window) {
   globalThis.navigator = window.navigator;
 
   for (const key of Object.getOwnPropertyNames(window)) {
-    if (key in globalThis) {
+    if (key in globalThis && !ALWAYS_OVERRIDE.has(key)) {
       continue;
     }
 

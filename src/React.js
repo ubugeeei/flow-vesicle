@@ -6,9 +6,9 @@ import * as React from "react";
 import { useCell } from "flow-cell/client";
 import type {
   FieldDescriptors,
+  FieldValues,
   SubmitButtonProps,
   UseVesicleOptions,
-  Values,
   Vesicle,
   VesicleHandle,
 } from "./Types";
@@ -26,7 +26,7 @@ export function useVesicle<F: FieldDescriptors, TResult>(
 
 export function useVesicleValues<F: FieldDescriptors, TResult>(
   handle: VesicleHandle<F, TResult>,
-): Values<F> {
+): FieldValues<F> {
   return useCell(handle.values);
 }
 
@@ -48,21 +48,8 @@ export function useVesiclePending<F: FieldDescriptors, TResult>(
   return useCell(handle.pending);
 }
 
-const reactDom: $FlowFixMe = (() => {
-  try {
-    // eslint-disable-next-line global-require
-    return require("react-dom");
-  } catch (_err) {
-    return null;
-  }
-})();
-
-type FormStatusShape = {
-  +pending: boolean,
-  +data: ?FormData,
-  +method: ?string,
-  +action: ?(string | (FormData) => Promise<mixed> | mixed),
-};
+import * as ReactDom from "react-dom";
+import type { FormStatusShape } from "react-dom";
 
 const idleFormStatus: FormStatusShape = Object.freeze({
   pending: false,
@@ -72,8 +59,8 @@ const idleFormStatus: FormStatusShape = Object.freeze({
 });
 
 export function useFormStatus(): FormStatusShape {
-  if (reactDom != null && typeof reactDom.useFormStatus === "function") {
-    return reactDom.useFormStatus();
+  if (typeof ReactDom.useFormStatus === "function") {
+    return ReactDom.useFormStatus();
   }
   return idleFormStatus;
 }
