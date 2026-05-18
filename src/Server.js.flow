@@ -49,3 +49,5 @@ declare export class GraphQLBridgeError extends Error {
 }
 declare export function vesicleFromMutation<F: FieldDescriptors, TResult = any>(config: any): any;
 declare export function applyGraphQLErrors<F: FieldDescriptors>(fields: F, error: mixed): any;
+declare export function VesicleForm<F: FieldDescriptors, TResult>(props: any): any;
+declare export function VesicleField<F: FieldDescriptors, TResult>(props: any): any;

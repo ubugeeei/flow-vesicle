@@ -29,6 +29,8 @@ async function smoke() {
     main,
     [
       "GraphQLBridgeError",
+      "VesicleField",
+      "VesicleForm",
       "applyGraphQLErrors",
       "arrayOps",
       "buildFormData",
@@ -56,6 +58,8 @@ async function smoke() {
     server,
     [
       "GraphQLBridgeError",
+      "VesicleField",
+      "VesicleForm",
       "applyGraphQLErrors",
       "arrayOps",
       "buildFormData",

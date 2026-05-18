@@ -3,8 +3,11 @@
 import * as React from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
+import { renderToStaticMarkup } from "react-dom/server";
 import {
   GraphQLBridgeError,
+  VesicleField,
+  VesicleForm,
   applyGraphQLErrors,
   arrayOps,
   field,
@@ -652,6 +655,77 @@ test("useUnsavedChangesGuard's beforeunload returns the message string when dirt
   } finally {
     unmount();
   }
+});
+
+test("VesicleForm renders a <form> with action and yields a handle to children", () => {
+  const def = vesicle({
+    fields: {
+      title: field.text({ required: true }),
+      body: field.textarea(),
+    },
+    initial: { title: "Hello" },
+  });
+  const html = renderToStaticMarkup(
+    React.createElement(
+      VesicleForm,
+      { vesicle: def, action: "/api/posts", className: "post-form" },
+      (handle) => React.createElement(
+        React.Fragment,
+        null,
+        React.createElement("input", handle.fields.title.input()),
+        React.createElement("textarea", handle.fields.body.input()),
+      ),
+    ),
+  );
+  expect(html).toContain("<form");
+  expect(html).toContain("class=\"post-form\"");
+  expect(html).toContain("action=\"/api/posts\"");
+  expect(html).toContain("name=\"title\"");
+  expect(html).toContain("value=\"Hello\"");
+  expect(html).toContain("name=\"body\"");
+  expect(html).toContain("required=\"\"");
+});
+
+test("VesicleForm accepts plain children without a render prop", () => {
+  const def = vesicle({ fields: { x: field.text() } });
+  const html = renderToStaticMarkup(
+    React.createElement(
+      VesicleForm,
+      { vesicle: def, action: "/x" },
+      React.createElement("button", { type: "submit" }, "Go"),
+    ),
+  );
+  expect(html).toContain("<form");
+  expect(html).toContain("Go");
+});
+
+test("VesicleField renders the right tag for each kind", () => {
+  const def = vesicle({
+    fields: {
+      title: field.text(),
+      bio: field.textarea(),
+      role: field.select(),
+    },
+    initial: { title: "T", bio: "B", role: "admin" },
+  });
+  const html = renderToStaticMarkup(
+    React.createElement(
+      "form",
+      null,
+      React.createElement(VesicleField, { vesicle: def, name: "title" }),
+      React.createElement(VesicleField, { vesicle: def, name: "bio" }),
+      React.createElement(VesicleField, {
+        vesicle: def,
+        name: "role",
+        children: React.createElement("option", { value: "admin" }, "Admin"),
+      }),
+    ),
+  );
+  expect(html).toContain("<input");
+  expect(html).toContain("name=\"title\"");
+  expect(html).toContain("<textarea name=\"bio\"");
+  expect(html).toContain("<select name=\"role\"");
+  expect(html).toContain("Admin");
 });
 
 test("useVesicleAction keeps previous state when the action throws", async () => {
