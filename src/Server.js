@@ -19,7 +19,7 @@ export type {
   UseVesicleOptions,
   ValidatorContext,
   ValidatorFn,
-  Values,
+  FieldValues,
   Vesicle,
   VesicleBoundHandle,
   VesicleConfig,

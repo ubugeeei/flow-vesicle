@@ -37,7 +37,7 @@ export type FieldDescriptor<T> = {
 
 export type FieldDescriptors = { +[string]: FieldDescriptor<mixed> };
 
-export type Values<F: FieldDescriptors> = { [name: $Keys<F>]: mixed };
+export type FieldValues<F: FieldDescriptors> = { [name: $Keys<F>]: mixed };
 export type Errors<F: FieldDescriptors> = { [name: $Keys<F>]: ?string };
 
 export type FormStatus = "idle" | "pending" | "fulfilled" | "rejected";
@@ -53,7 +53,7 @@ export type ActionFn<TResult = mixed> = (
 ) => Promise<TResult> | TResult;
 
 export type ValidatorContext<F: FieldDescriptors> = {
-  +values: Values<F>,
+  +values: FieldValues<F>,
   +touched: { +[name: $Keys<F>]: boolean },
 };
 
@@ -62,7 +62,7 @@ export type ValidatorFn<F: FieldDescriptors> = (
 ) => Errors<F> | Promise<Errors<F>>;
 
 export type OptimisticFn<F: FieldDescriptors> = (
-  context: { +values: Values<F> },
+  context: { +values: FieldValues<F> },
 ) => mixed;
 
 export type NavigationGuardConfig<F: FieldDescriptors> = {
@@ -77,7 +77,7 @@ export type VesicleConfig<F: FieldDescriptors, TResult = mixed> = {
   +optimistic?: OptimisticFn<F>,
   +navigation?: NavigationGuardConfig<F>,
   +permalink?: string,
-  +initial?: $Shape<Values<F>>,
+  +initial?: Partial<FieldValues<F>>,
 };
 
 export type FieldInput = {
@@ -127,7 +127,7 @@ export interface VesicleHandle<F: FieldDescriptors, TResult = mixed> {
   reset(): void;
   submit(): Promise<TResult | void>;
   whenDirty(): () => boolean;
-  bind(options?: { +initial?: $Shape<Values<F>>, +permalink?: string }): VesicleBoundHandle<F, TResult>;
+  bind(options?: { +initial?: Partial<FieldValues<F>>, +permalink?: string }): VesicleBoundHandle<F, TResult>;
 }
 
 export interface VesicleBoundHandle<F: FieldDescriptors, TResult = mixed>
@@ -137,9 +137,9 @@ export interface VesicleBoundHandle<F: FieldDescriptors, TResult = mixed>
 
 export type Vesicle<F: FieldDescriptors, TResult = mixed> = {
   +config: VesicleConfig<F, TResult>,
-  +create: (overrides?: { +initial?: $Shape<Values<F>>, +permalink?: string }) =>
+  +create: (overrides?: { +initial?: Partial<FieldValues<F>>, +permalink?: string }) =>
     VesicleBoundHandle<F, TResult>,
-  +bind: (overrides?: { +initial?: $Shape<Values<F>>, +permalink?: string }) =>
+  +bind: (overrides?: { +initial?: Partial<FieldValues<F>>, +permalink?: string }) =>
     VesicleBoundHandle<F, TResult>,
   +current: () => ?VesicleHandle<F, TResult>,
   +subscribe: (listener: () => void) => () => void,
@@ -169,7 +169,7 @@ export type SubmitButtonProps = {
 };
 
 export type UseVesicleOptions<F: FieldDescriptors> = {
-  +initial?: $Shape<Values<F>>,
+  +initial?: Partial<FieldValues<F>>,
   +permalink?: string,
 };
 
@@ -188,7 +188,7 @@ declare export function useVesicle<F: FieldDescriptors, TResult>(
 ): VesicleHandle<F, TResult>;
 declare export function useVesicleValues<F: FieldDescriptors, TResult>(
   handle: VesicleHandle<F, TResult>,
-): Values<F>;
+): FieldValues<F>;
 declare export function useVesicleDirty<F: FieldDescriptors, TResult>(
   handle: VesicleHandle<F, TResult>,
 ): boolean;
