@@ -3,11 +3,14 @@
 "use client";
 
 import * as React from "react";
+import * as ReactDom from "react-dom";
 import { useCell } from "flow-cell/client";
+import type { FormStatusShape } from "react-dom";
 import type {
   FieldDescriptors,
   FieldValues,
   SubmitButtonProps,
+  UseVesicleAction,
   UseVesicleOptions,
   Vesicle,
   VesicleHandle,
@@ -48,8 +51,36 @@ export function useVesiclePending<F: FieldDescriptors, TResult>(
   return useCell(handle.pending);
 }
 
-import * as ReactDom from "react-dom";
-import type { FormStatusShape } from "react-dom";
+const reactUseActionState: $FlowFixMe = (React as $FlowFixMe).useActionState;
+
+export function useVesicleAction<F: FieldDescriptors, TResult>(
+  handle: VesicleHandle<F, TResult>,
+  initialState: TResult | null,
+  permalink?: string,
+): UseVesicleAction<TResult> {
+  if (typeof reactUseActionState !== "function") {
+    throw new Error(
+      "flow-vesicle: useVesicleAction requires React >= 19 (React.useActionState is missing). "
+      + "Upgrade `react` and `react-dom` to ^19.0.0 in your app.",
+    );
+  }
+  const dispatcher = React.useCallback(
+    async (previous: TResult | null, formData: FormData): Promise<TResult | null> => {
+      try {
+        const value = await handle.action(formData);
+        return value == null ? previous : (value as TResult);
+      } catch (_error) {
+        return previous;
+      }
+    },
+    [handle],
+  );
+  const link: ?string = permalink ?? (handle as $FlowFixMe).permalink ?? null;
+  const tuple = link != null
+    ? reactUseActionState(dispatcher, initialState, link)
+    : reactUseActionState(dispatcher, initialState);
+  return tuple;
+}
 
 const idleFormStatus: FormStatusShape = Object.freeze({
   pending: false,

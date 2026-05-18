@@ -16,6 +16,11 @@ declare export function useVesicleValues<F, TResult>(handle: any): any;
 declare export function useVesicleDirty<F, TResult>(handle: any): boolean;
 declare export function useVesicleValid<F, TResult>(handle: any): boolean;
 declare export function useVesiclePending<F, TResult>(handle: any): boolean;
+declare export function useVesicleAction<F, TResult>(
+  handle: any,
+  initialState: TResult | null,
+  permalink?: string,
+): [TResult | null, (formData: FormData) => void, boolean];
 declare export function useFormStatus(): {
   +pending: boolean,
   +data: ?FormData,

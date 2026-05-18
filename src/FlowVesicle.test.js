@@ -1,6 +1,9 @@
 /* @flow strict */
 
-import { field, inputTypeFor, vesicle } from "./FlowVesicle";
+import * as React from "react";
+import { act } from "react";
+import { createRoot } from "react-dom/client";
+import { field, inputTypeFor, useVesicle, useVesicleAction, vesicle } from "./FlowVesicle";
 import { buildFormData, objectFromFormData, readFormPayload } from "./FormData";
 
 test("field.text descriptor parses to string and serializes round-trip", () => {
@@ -170,4 +173,84 @@ test("readFormPayload handles FormData, HTMLFormElement and plain objects", () =
 
   expect(readFormPayload({ y: 2 })).toEqual({ y: 2 });
   expect(readFormPayload(null)).toEqual({});
+});
+
+async function renderAndCapture(node) {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  await act(async () => {
+    root.render(node);
+  });
+  return {
+    container,
+    unmount: () => {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    },
+  };
+}
+
+test("useVesicleAction wires vesicle.action through React.useActionState", async () => {
+  const def = vesicle({
+    fields: { name: field.text({ required: true }) },
+    action: async (formData) => ({ savedAs: String(formData.get("name") ?? "") }),
+  });
+
+  const captured = { result: null, pending: null, formAction: null };
+
+  function Probe() {
+    const handle = useVesicle(def);
+    const [result, formAction, pending] = useVesicleAction(handle, null);
+    captured.result = result;
+    captured.pending = pending;
+    captured.formAction = formAction;
+    return null;
+  }
+
+  const { unmount } = await renderAndCapture(React.createElement(Probe));
+  try {
+    expect(captured.result).toBeNull();
+    expect(captured.pending).toBe(false);
+    expect(typeof captured.formAction).toBe("function");
+    await act(async () => {
+      captured.formAction(buildFormData({ name: "ada" }));
+    });
+    expect(captured.result).toEqual({ savedAs: "ada" });
+    expect(captured.pending).toBe(false);
+  } finally {
+    unmount();
+  }
+});
+
+test("useVesicleAction keeps previous state when the action throws", async () => {
+  const def = vesicle({
+    fields: { name: field.text({ required: true }) },
+    action: async () => {
+      throw new Error("server exploded");
+    },
+  });
+
+  const captured = { result: null, formAction: null };
+
+  function Probe() {
+    const handle = useVesicle(def);
+    const [result, formAction] = useVesicleAction(handle, { savedAs: "initial" });
+    captured.result = result;
+    captured.formAction = formAction;
+    return null;
+  }
+
+  const { unmount } = await renderAndCapture(React.createElement(Probe));
+  try {
+    expect(captured.result).toEqual({ savedAs: "initial" });
+    await act(async () => {
+      captured.formAction(buildFormData({ name: "ada" }));
+    });
+    expect(captured.result).toEqual({ savedAs: "initial" });
+  } finally {
+    unmount();
+  }
 });

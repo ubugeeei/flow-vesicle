@@ -192,3 +192,9 @@ export type UseVesicleOptions<F: FieldDescriptors> = {
   +initial?: Partial<FieldValues<F>>,
   +permalink?: string,
 };
+
+export type UseVesicleAction<TResult> = [
+  TResult | null,
+  (formData: FormData) => void,
+  boolean,
+];
