@@ -261,6 +261,34 @@ declare export function applyGraphQLErrors<F: FieldDescriptors>(
   error: mixed,
 ): { +per: { +[string]: string }, +global: ?Array<string> };
 
+export type VesicleFormProps<F: FieldDescriptors, TResult> = {
+  +vesicle: Vesicle<F, TResult>,
+  +action?: ActionFn<TResult> | string,
+  +initial?: Partial<FieldValues<F>>,
+  +permalink?: string,
+  +id?: string,
+  +className?: string,
+  +method?: string,
+  +children?: React.Node | ((handle: VesicleBoundHandle<F, TResult>) => React.Node),
+};
+declare export function VesicleForm<F: FieldDescriptors, TResult>(
+  props: VesicleFormProps<F, TResult>,
+): React.Node;
+
+export type VesicleFieldProps<F: FieldDescriptors, TResult> = {
+  +vesicle: Vesicle<F, TResult>,
+  +name: $Keys<F>,
+  +as?: "input" | "textarea" | "select",
+  +overrides?: FieldOptions,
+  +id?: string,
+  +className?: string,
+  +placeholder?: string,
+  +children?: React.Node,
+};
+declare export function VesicleField<F: FieldDescriptors, TResult>(
+  props: VesicleFieldProps<F, TResult>,
+): React.Node;
+
 declare export function useVesicle<F: FieldDescriptors, TResult>(
   definition: Vesicle<F, TResult>,
   options?: UseVesicleOptions<F>,

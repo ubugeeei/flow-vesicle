@@ -41,3 +41,8 @@ export {
   vesicleFromMutation,
 } from "./GraphQL";
 export type { GraphQLBridgeConfig } from "./GraphQL";
+export { VesicleField, VesicleForm } from "./ServerComponents";
+export type {
+  VesicleFieldProps,
+  VesicleFormProps,
+} from "./ServerComponents";
