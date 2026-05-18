@@ -215,6 +215,52 @@ declare export function vesicle<F: FieldDescriptors, TResult = mixed>(
   config: VesicleConfig<F, TResult>,
 ): Vesicle<F, TResult>;
 
+declare export class GraphQLBridgeError extends Error {
+  errors: $ReadOnlyArray<{
+    +message: string,
+    +path?: ?$ReadOnlyArray<string | number>,
+    +extensions?: ?{ +[string]: mixed },
+    ...
+  }>;
+  constructor(
+    message: string,
+    errors: $ReadOnlyArray<{
+      +message: string,
+      +path?: ?$ReadOnlyArray<string | number>,
+      ...
+    }>,
+  ): void;
+}
+export type GraphQLBridgeConfig<F: FieldDescriptors, TResult> = {
+  +mutation: string,
+  +fields: F,
+  +endpoint?: string,
+  +fetch?: (input: {
+    +query: string,
+    +variables: { +[string]: mixed },
+    +signal: AbortSignal,
+    +headers: { +[string]: string },
+  }) => Promise<{
+    +data?: ?{ +[string]: mixed },
+    +errors?: ?$ReadOnlyArray<{ +message: string, +path?: ?$ReadOnlyArray<string | number>, ... }>,
+  }>,
+  +headers?: () => { +[string]: string } | Promise<{ +[string]: string }>,
+  +variables?: (values: FieldValues<F>) => { +[string]: mixed },
+  +select?: (data: { +[string]: mixed }) => TResult,
+  +validate?: ValidatorFn<F>,
+  +optimistic?: OptimisticFn<F>,
+  +navigation?: NavigationGuardConfig<F>,
+  +permalink?: string,
+  +initial?: Partial<FieldValues<F>>,
+};
+declare export function vesicleFromMutation<F: FieldDescriptors, TResult = { +[string]: mixed }>(
+  config: GraphQLBridgeConfig<F, TResult>,
+): Vesicle<F, TResult>;
+declare export function applyGraphQLErrors<F: FieldDescriptors>(
+  fields: F,
+  error: mixed,
+): { +per: { +[string]: string }, +global: ?Array<string> };
+
 declare export function useVesicle<F: FieldDescriptors, TResult>(
   definition: Vesicle<F, TResult>,
   options?: UseVesicleOptions<F>,

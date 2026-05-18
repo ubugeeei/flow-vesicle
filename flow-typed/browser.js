@@ -52,6 +52,28 @@ declare class HTMLAnchorElement extends HTMLElement {
   href: string;
 }
 
+declare class Response {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  headers: { get(name: string): string | null, ... };
+  json(): Promise<mixed>;
+  text(): Promise<string>;
+}
+
+declare function fetch(
+  input: string,
+  init?: {
+    method?: string,
+    headers?: { +[string]: string },
+    body?: mixed,
+    signal?: AbortSignal,
+    credentials?: "omit" | "same-origin" | "include",
+    cache?: string,
+    ...
+  },
+): Promise<Response>;
+
 declare class HTMLFormElement extends HTMLElement {
   action: string;
   method: string;

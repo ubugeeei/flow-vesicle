@@ -43,3 +43,9 @@ declare export function objectFromFormData(formData: FormData): { [string]: mixe
 declare export function readFormPayload(input: mixed): { [string]: mixed };
 declare export function buildFormData(values: { +[string]: mixed }): FormData;
 declare export function vesicle<F: FieldDescriptors, TResult = mixed>(config: any): any;
+declare export class GraphQLBridgeError extends Error {
+  errors: any;
+  constructor(message: string, errors: any): void;
+}
+declare export function vesicleFromMutation<F: FieldDescriptors, TResult = any>(config: any): any;
+declare export function applyGraphQLErrors<F: FieldDescriptors>(fields: F, error: mixed): any;
