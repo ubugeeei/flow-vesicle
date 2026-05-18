@@ -173,6 +173,12 @@ export type UseVesicleOptions<F: FieldDescriptors> = {
   +permalink?: string,
 };
 
+export type UseVesicleAction<TResult> = [
+  TResult | null,
+  (formData: FormData) => void,
+  boolean,
+];
+
 declare export var field: Field;
 declare export function inputTypeFor(kind: FieldKind): string;
 declare export function objectFromFormData(formData: FormData): { [string]: mixed };
@@ -198,6 +204,11 @@ declare export function useVesicleValid<F: FieldDescriptors, TResult>(
 declare export function useVesiclePending<F: FieldDescriptors, TResult>(
   handle: VesicleHandle<F, TResult>,
 ): boolean;
+declare export function useVesicleAction<F: FieldDescriptors, TResult>(
+  handle: VesicleHandle<F, TResult>,
+  initialState: TResult | null,
+  permalink?: string,
+): UseVesicleAction<TResult>;
 declare export function useFormStatus(): {
   +pending: boolean,
   +data: ?FormData,
