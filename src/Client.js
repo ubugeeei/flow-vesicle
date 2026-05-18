@@ -3,6 +3,7 @@
 "use client";
 
 export type {
+  OptimisticReducer,
   SubmitButtonProps,
   UseVesicleAction,
   UseVesicleOptions,
@@ -15,6 +16,7 @@ export {
   useVesicle,
   useVesicleAction,
   useVesicleDirty,
+  useVesicleOptimistic,
   useVesiclePending,
   useVesicleValid,
   useVesicleValues,

@@ -3,7 +3,14 @@
 import * as React from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { field, inputTypeFor, useVesicle, useVesicleAction, vesicle } from "./FlowVesicle";
+import {
+  field,
+  inputTypeFor,
+  useVesicle,
+  useVesicleAction,
+  useVesicleOptimistic,
+  vesicle,
+} from "./FlowVesicle";
 import { buildFormData, objectFromFormData, readFormPayload } from "./FormData";
 
 test("field.text descriptor parses to string and serializes round-trip", () => {
@@ -220,6 +227,75 @@ test("useVesicleAction wires vesicle.action through React.useActionState", async
     });
     expect(captured.result).toEqual({ savedAs: "ada" });
     expect(captured.pending).toBe(false);
+  } finally {
+    unmount();
+  }
+});
+
+test("useVesicleOptimistic merges patches by default and resets to committed values", async () => {
+  const def = vesicle({
+    fields: {
+      title: field.text(),
+      count: field.number(),
+    },
+    initial: { title: "draft", count: 0 },
+  });
+
+  const captured = { values: null, apply: null };
+
+  function Probe() {
+    const handle = useVesicle(def);
+    const [values, apply] = useVesicleOptimistic(handle);
+    captured.values = values;
+    captured.apply = apply;
+    return null;
+  }
+
+  const { unmount } = await renderAndCapture(React.createElement(Probe));
+  try {
+    expect(captured.values).toEqual({ title: "draft", count: 0 });
+    await act(async () => {
+      React.startTransition(() => {
+        captured.apply({ title: "draft (saving)" });
+      });
+    });
+    expect(captured.values).toEqual({ title: "draft", count: 0 });
+  } finally {
+    unmount();
+  }
+});
+
+test("useVesicleOptimistic accepts a custom reducer", async () => {
+  const def = vesicle({
+    fields: { count: field.number() },
+    initial: { count: 1 },
+  });
+
+  const captured = { values: null, apply: null };
+
+  function Probe() {
+    const handle = useVesicle(def);
+    const [values, apply] = useVesicleOptimistic(
+      handle,
+      (current, delta) => ({
+        ...current,
+        count: (typeof current.count === "number" ? current.count : 0) + delta,
+      }),
+    );
+    captured.values = values;
+    captured.apply = apply;
+    return null;
+  }
+
+  const { unmount } = await renderAndCapture(React.createElement(Probe));
+  try {
+    expect(captured.values).toEqual({ count: 1 });
+    await act(async () => {
+      React.startTransition(() => {
+        captured.apply(5);
+      });
+    });
+    expect(captured.values).toEqual({ count: 1 });
   } finally {
     unmount();
   }

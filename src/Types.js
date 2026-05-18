@@ -198,3 +198,8 @@ export type UseVesicleAction<TResult> = [
   (formData: FormData) => void,
   boolean,
 ];
+
+export type OptimisticReducer<F: FieldDescriptors, TPatch> = (
+  current: FieldValues<F>,
+  optimistic: TPatch,
+) => FieldValues<F>;

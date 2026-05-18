@@ -179,6 +179,11 @@ export type UseVesicleAction<TResult> = [
   boolean,
 ];
 
+export type OptimisticReducer<F: FieldDescriptors, TPatch> = (
+  current: FieldValues<F>,
+  optimistic: TPatch,
+) => FieldValues<F>;
+
 declare export var field: Field;
 declare export function inputTypeFor(kind: FieldKind): string;
 declare export function objectFromFormData(formData: FormData): { [string]: mixed };
@@ -209,6 +214,10 @@ declare export function useVesicleAction<F: FieldDescriptors, TResult>(
   initialState: TResult | null,
   permalink?: string,
 ): UseVesicleAction<TResult>;
+declare export function useVesicleOptimistic<F: FieldDescriptors, TResult, TPatch = Partial<FieldValues<F>>>(
+  handle: VesicleHandle<F, TResult>,
+  reducer?: OptimisticReducer<F, TPatch>,
+): [FieldValues<F>, (patch: TPatch) => void];
 declare export function useFormStatus(): {
   +pending: boolean,
   +data: ?FormData,

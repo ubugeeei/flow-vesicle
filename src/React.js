@@ -9,6 +9,7 @@ import type { FormStatusShape } from "react-dom";
 import type {
   FieldDescriptors,
   FieldValues,
+  OptimisticReducer,
   SubmitButtonProps,
   UseVesicleAction,
   UseVesicleOptions,
@@ -79,6 +80,31 @@ export function useVesicleAction<F: FieldDescriptors, TResult>(
   const tuple = link != null
     ? reactUseActionState(dispatcher, initialState, link)
     : reactUseActionState(dispatcher, initialState);
+  return tuple;
+}
+
+const reactUseOptimistic: $FlowFixMe = (React as $FlowFixMe).useOptimistic;
+
+function shallowMerge<F: FieldDescriptors>(
+  current: FieldValues<F>,
+  patch: Partial<FieldValues<F>>,
+): FieldValues<F> {
+  return ({ ...current, ...patch } as $FlowFixMe);
+}
+
+export function useVesicleOptimistic<F: FieldDescriptors, TResult, TPatch = Partial<FieldValues<F>>>(
+  handle: VesicleHandle<F, TResult>,
+  reducer?: OptimisticReducer<F, TPatch>,
+): [FieldValues<F>, (patch: TPatch) => void] {
+  if (typeof reactUseOptimistic !== "function") {
+    throw new Error(
+      "flow-vesicle: useVesicleOptimistic requires React >= 19 (React.useOptimistic is missing). "
+      + "Upgrade `react` and `react-dom` to ^19.0.0 in your app.",
+    );
+  }
+  const committed = useCell(handle.values);
+  const effective: OptimisticReducer<F, TPatch> = reducer ?? ((shallowMerge as $FlowFixMe) as OptimisticReducer<F, TPatch>);
+  const tuple: [FieldValues<F>, (patch: TPatch) => void] = reactUseOptimistic(committed, effective);
   return tuple;
 }
 

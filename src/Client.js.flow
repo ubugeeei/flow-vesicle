@@ -21,6 +21,10 @@ declare export function useVesicleAction<F, TResult>(
   initialState: TResult | null,
   permalink?: string,
 ): [TResult | null, (formData: FormData) => void, boolean];
+declare export function useVesicleOptimistic<F, TResult, TPatch = any>(
+  handle: any,
+  reducer?: (current: any, optimistic: TPatch) => any,
+): [any, (patch: TPatch) => void];
 declare export function useFormStatus(): {
   +pending: boolean,
   +data: ?FormData,
