@@ -171,6 +171,8 @@ class VesicleInstance<F: FieldDescriptors, TResult> implements VesicleHandle<F, 
   pending: Cell<boolean>;
   state: Cell<FormState<TResult>>;
   _permalink: ?string;
+  _validateToken: number = 0;
+  _validateController: ?AbortController = null;
 
   constructor(
     config: VesicleConfig<F, TResult>,
@@ -275,10 +277,29 @@ class VesicleInstance<F: FieldDescriptors, TResult> implements VesicleHandle<F, 
     if (validator == null) {
       return ({} as $FlowFixMe as Errors<F>);
     }
-    const result = await validator({
-      values: this.values.get(),
-      touched: this.touched.get() as $FlowFixMe,
-    });
+    if (this._validateController != null) {
+      this._validateController.abort();
+    }
+    const controller = new AbortController();
+    this._validateController = controller;
+    this._validateToken += 1;
+    const token = this._validateToken;
+    let result: Errors<F>;
+    try {
+      result = await validator({
+        values: this.values.get(),
+        touched: this.touched.get() as $FlowFixMe,
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (controller.signal.aborted || token !== this._validateToken) {
+        return ({} as $FlowFixMe as Errors<F>);
+      }
+      throw error;
+    }
+    if (token !== this._validateToken || controller.signal.aborted) {
+      return ({} as $FlowFixMe as Errors<F>);
+    }
     transaction(() => {
       for (const handle of this._fieldList) {
         const next = (result as $FlowFixMe)[handle.name] ?? null;

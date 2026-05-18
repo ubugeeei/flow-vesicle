@@ -98,6 +98,90 @@ test("vesicle.validate populates per-field errors and clears the valid flag", as
   expect(handle.valid.get()).toBe(true);
 });
 
+test("vesicle.validate aborts the previous in-flight validator", async () => {
+  const aborts = [];
+  let resolveSlow;
+  const slow = new Promise((resolve) => {
+    resolveSlow = resolve;
+  });
+
+  const def = vesicle({
+    fields: { email: field.email() },
+    validate: ({ signal }) => {
+      signal.addEventListener("abort", () => {
+        aborts.push("aborted");
+      });
+      return slow;
+    },
+  });
+  const handle = def.bind();
+
+  const first = handle.validate();
+  const second = handle.validate();
+
+  resolveSlow({ email: null });
+  const [firstResult, secondResult] = await Promise.all([first, second]);
+
+  expect(aborts).toEqual(["aborted"]);
+  expect(firstResult).toEqual({});
+  expect(secondResult).toEqual({ email: null });
+  expect(handle.errors.get()).toEqual({ email: null });
+});
+
+test("vesicle.validate keeps only the latest result when a stale promise resolves last", async () => {
+  let resolveStale;
+  let resolveFresh;
+  const calls = [];
+  const def = vesicle({
+    fields: { email: field.email() },
+    validate: () => {
+      calls.push(true);
+      if (calls.length === 1) {
+        return new Promise((resolve) => {
+          resolveStale = resolve;
+        });
+      }
+      return new Promise((resolve) => {
+        resolveFresh = resolve;
+      });
+    },
+  });
+  const handle = def.bind();
+
+  const stale = handle.validate();
+  const fresh = handle.validate();
+
+  resolveFresh({ email: "fresh-error" });
+  await fresh;
+  expect(handle.errors.get().email).toBe("fresh-error");
+
+  resolveStale({ email: "stale-error" });
+  await stale;
+  expect(handle.errors.get().email).toBe("fresh-error");
+});
+
+test("vesicle.validate forwards thrown errors only when the call is still current", async () => {
+  let attempt = 0;
+  const def = vesicle({
+    fields: { email: field.email() },
+    validate: async ({ signal }) => {
+      attempt += 1;
+      if (attempt === 1) {
+        await new Promise((resolve) => {
+          signal.addEventListener("abort", () => resolve());
+        });
+        throw new Error("first call exploded after abort");
+      }
+      return { email: null };
+    },
+  });
+  const handle = def.bind();
+  const first = handle.validate();
+  const second = handle.validate();
+  await second;
+  await expect(first).resolves.toEqual({});
+});
+
 test("vesicle.action runs validator then action and resolves state", async () => {
   const calls = [];
   const def = vesicle({
