@@ -1,0 +1,25 @@
+/* @flow strict */
+
+import type * as React from "react";
+
+export type SubmitButtonProps = {
+  +children?: React.Node,
+  +pendingLabel?: React.Node,
+  +disabled?: boolean,
+  +className?: string,
+  +style?: { +[string]: mixed },
+  ...
+};
+
+declare export function useVesicle<F, TResult>(definition: any, options?: any): any;
+declare export function useVesicleValues<F, TResult>(handle: any): any;
+declare export function useVesicleDirty<F, TResult>(handle: any): boolean;
+declare export function useVesicleValid<F, TResult>(handle: any): boolean;
+declare export function useVesiclePending<F, TResult>(handle: any): boolean;
+declare export function useFormStatus(): {
+  +pending: boolean,
+  +data: ?FormData,
+  +method: ?string,
+  +action: ?(string | (FormData) => Promise<mixed> | mixed),
+};
+declare export function SubmitButton(props: SubmitButtonProps): React.Node;

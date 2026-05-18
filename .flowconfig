@@ -1,0 +1,25 @@
+[ignore]
+.*/node_modules/.*
+.*/dist/.*
+.*/.test-build/.*
+<PROJECT_ROOT>/FlowVesicle.js
+<PROJECT_ROOT>/FlowVesicle.mjs
+<PROJECT_ROOT>/FlowVesicle.js.flow
+<PROJECT_ROOT>/src/FlowVesicle.test.js
+
+[include]
+<PROJECT_ROOT>/src
+
+[libs]
+<PROJECT_ROOT>/flow-typed
+
+[lints]
+
+[options]
+component_syntax=true
+module.name_mapper='^flow-vesicle$' -> '<PROJECT_ROOT>/src/FlowVesicle.js'
+module.name_mapper='^flow-vesicle/client$' -> '<PROJECT_ROOT>/src/Client.js'
+module.name_mapper='^flow-vesicle/server$' -> '<PROJECT_ROOT>/src/Server.js'
+react.runtime=automatic
+
+[strict]

@@ -1,0 +1,43 @@
+/* @flow strict */
+
+export type FieldKind =
+  | "text"
+  | "textarea"
+  | "hidden"
+  | "number"
+  | "checkbox"
+  | "select"
+  | "email"
+  | "password"
+  | "date"
+  | "url";
+
+export type FieldOptions = {
+  +required?: boolean,
+  +minLength?: number,
+  +maxLength?: number,
+  +min?: number,
+  +max?: number,
+  +pattern?: string,
+  +placeholder?: string,
+  +autocomplete?: string,
+  +label?: string,
+  +options?: $ReadOnlyArray<{ +label: string, +value: string }>,
+};
+
+export type FieldDescriptor<T> = {
+  +kind: FieldKind,
+  +options: FieldOptions,
+  +parse: (raw: mixed) => T,
+  +serialize: (value: T) => mixed,
+  +empty: () => T,
+};
+
+export type FieldDescriptors = { +[string]: FieldDescriptor<mixed> };
+
+declare export var field: any;
+declare export function inputTypeFor(kind: FieldKind): string;
+declare export function objectFromFormData(formData: FormData): { [string]: mixed };
+declare export function readFormPayload(input: mixed): { [string]: mixed };
+declare export function buildFormData(values: { +[string]: mixed }): FormData;
+declare export function vesicle<F: FieldDescriptors, TResult = mixed>(config: any): any;
