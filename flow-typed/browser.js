@@ -74,6 +74,49 @@ declare function fetch(
   },
 ): Promise<Response>;
 
+declare class Location {
+  href: string;
+  origin: string;
+  protocol: string;
+  host: string;
+  pathname: string;
+  search: string;
+  hash: string;
+}
+
+declare class History {
+  state: mixed;
+  length: number;
+  back(): void;
+  forward(): void;
+  go(delta?: number): void;
+  pushState(state: mixed, title: string, url?: string): void;
+  replaceState(state: mixed, title: string, url?: string): void;
+}
+
+declare var history: History;
+
+declare class Document {
+  body: HTMLElement;
+  createElement(tag: string): HTMLElement;
+  addEventListener(type: string, listener: (event: mixed) => mixed, options?: boolean | { ... }): void;
+  removeEventListener(type: string, listener: (event: mixed) => mixed, options?: boolean | { ... }): void;
+}
+
+declare var document: Document;
+
+declare class Window {
+  location: Location;
+  history: History;
+  document: Document;
+  navigator: { userAgent: string, ... };
+  confirm(message?: string): boolean;
+  addEventListener(type: string, listener: (event: mixed) => mixed, options?: boolean | { ... }): void;
+  removeEventListener(type: string, listener: (event: mixed) => mixed, options?: boolean | { ... }): void;
+}
+
+declare var window: Window;
+
 declare class HTMLFormElement extends HTMLElement {
   action: string;
   method: string;

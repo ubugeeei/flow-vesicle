@@ -38,6 +38,7 @@ async function smoke() {
       "readFormPayload",
       "SubmitButton",
       "useFormStatus",
+      "useUnsavedChangesGuard",
       "useVesicle",
       "useVesicleAction",
       "useVesicleDirty",
@@ -73,6 +74,7 @@ async function smoke() {
     [
       "SubmitButton",
       "useFormStatus",
+      "useUnsavedChangesGuard",
       "useVesicle",
       "useVesicleAction",
       "useVesicleDirty",

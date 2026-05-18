@@ -54,3 +54,5 @@ export {
   useVesicleValid,
   useVesicleValues,
 } from "./React";
+export { useUnsavedChangesGuard } from "./Navigation";
+export type { UnsavedChangesGuardOptions } from "./Navigation";
