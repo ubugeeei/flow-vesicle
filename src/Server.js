@@ -35,3 +35,9 @@ export {
   readFormPayload,
 } from "./FormData";
 export { vesicle } from "./Vesicle";
+export {
+  GraphQLBridgeError,
+  applyGraphQLErrors,
+  vesicleFromMutation,
+} from "./GraphQL";
+export type { GraphQLBridgeConfig } from "./GraphQL";

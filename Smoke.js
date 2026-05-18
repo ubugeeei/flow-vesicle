@@ -22,17 +22,18 @@ function expectKeys(obj, names, label) {
   }
 }
 
-function smoke() {
+async function smoke() {
   const { main, server, client } = loadDist();
 
   expectKeys(
     main,
     [
+      "GraphQLBridgeError",
+      "applyGraphQLErrors",
       "arrayOps",
+      "buildFormData",
       "field",
       "inputTypeFor",
-      "vesicle",
-      "buildFormData",
       "objectFromFormData",
       "readFormPayload",
       "SubmitButton",
@@ -44,6 +45,8 @@ function smoke() {
       "useVesiclePending",
       "useVesicleValid",
       "useVesicleValues",
+      "vesicle",
+      "vesicleFromMutation",
     ],
     "FlowVesicle.js"
   );
@@ -51,13 +54,16 @@ function smoke() {
   expectKeys(
     server,
     [
+      "GraphQLBridgeError",
+      "applyGraphQLErrors",
       "arrayOps",
+      "buildFormData",
       "field",
       "inputTypeFor",
-      "vesicle",
-      "buildFormData",
       "objectFromFormData",
       "readFormPayload",
+      "vesicle",
+      "vesicleFromMutation",
     ],
     "Server.js"
   );
@@ -108,7 +114,18 @@ function smoke() {
   assert.equal(formData.get("flag"), "on");
   assert.deepEqual(formData.getAll("list"), ["x", "y"]);
 
+  const gqlBridge = main.vesicleFromMutation({
+    mutation: "mutation Smoke($name:String!){smoke(name:$name){id}}",
+    fields: { name: main.field.text() },
+    fetch: async ({ variables }) => ({ data: { smoke: { id: variables.name } } }),
+  });
+  const gqlResult = await gqlBridge.bind().action(main.buildFormData({ name: "ada" }));
+  assert.deepEqual(gqlResult, { smoke: { id: "ada" } });
+
   console.log("smoke: ok");
 }
 
-smoke();
+smoke().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

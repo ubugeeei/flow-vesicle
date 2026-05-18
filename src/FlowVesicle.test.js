@@ -4,6 +4,8 @@ import * as React from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  GraphQLBridgeError,
+  applyGraphQLErrors,
   arrayOps,
   field,
   inputTypeFor,
@@ -11,6 +13,7 @@ import {
   useVesicleAction,
   useVesicleOptimistic,
   vesicle,
+  vesicleFromMutation,
 } from "./FlowVesicle";
 import { buildFormData, objectFromFormData, readFormPayload } from "./FormData";
 
@@ -459,6 +462,97 @@ test("useVesicleOptimistic accepts a custom reducer", async () => {
   } finally {
     unmount();
   }
+});
+
+test("vesicleFromMutation forwards values as variables and selects nested data", async () => {
+  let lastBody = null;
+  const v = vesicleFromMutation({
+    mutation: "mutation CreatePost($title:String!,$body:String){createPost(title:$title,body:$body){id}}",
+    fields: {
+      title: field.text({ required: true }),
+      body: field.textarea(),
+    },
+    fetch: async ({ query, variables }) => {
+      lastBody = { query, variables };
+      return { data: { createPost: { id: "p1" } } };
+    },
+    select: (data) => data.createPost,
+  });
+  const handle = v.bind();
+  const result = await handle.action(buildFormData({ title: "Hi", body: "world" }));
+  expect(result).toEqual({ id: "p1" });
+  expect(lastBody?.variables).toEqual({ title: "Hi", body: "world" });
+  expect(handle.state.get().status).toBe("fulfilled");
+});
+
+test("vesicleFromMutation throws GraphQLBridgeError when the response has errors", async () => {
+  const v = vesicleFromMutation({
+    mutation: "mutation X($title:String!){x(title:$title){id}}",
+    fields: { title: field.text() },
+    fetch: async () => ({
+      data: null,
+      errors: [
+        { message: "title taken", path: ["x", "title"] },
+        { message: "rate limited" },
+      ],
+    }),
+  });
+  const handle = v.bind();
+  await expect(handle.action(buildFormData({ title: "boom" }))).rejects.toThrow("title taken");
+  expect(handle.state.get().status).toBe("rejected");
+});
+
+test("vesicleFromMutation supports custom variables() mapper", async () => {
+  let lastVars = null;
+  const v = vesicleFromMutation({
+    mutation: "mutation Bump($id:ID!,$by:Int!){bump(id:$id,by:$by){id}}",
+    fields: {
+      target: field.text({ required: true }),
+      amount: field.number(),
+    },
+    variables: (values) => ({
+      id: values.target,
+      by: values.amount == null ? 1 : values.amount,
+    }),
+    fetch: async ({ variables }) => {
+      lastVars = variables;
+      return { data: { bump: { id: "ok" } } };
+    },
+  });
+  const handle = v.bind();
+  await handle.action(buildFormData({ target: "post-1", amount: "5" }));
+  expect(lastVars).toEqual({ id: "post-1", by: 5 });
+});
+
+test("applyGraphQLErrors maps per-field path errors and collects globals", () => {
+  const fields = {
+    title: field.text(),
+    body: field.textarea(),
+  };
+  const error = new GraphQLBridgeError("oops", [
+    { message: "title taken", path: ["x", "title"] },
+    { message: "rate limited" },
+    { message: "body too long", path: ["x", "body"] },
+    { message: "extra title issue", path: ["x", "title"] },
+  ]);
+  const { per, global } = applyGraphQLErrors(fields, error);
+  expect(per).toEqual({ title: "title taken", body: "body too long" });
+  expect(global).toEqual(["rate limited", "extra title issue"]);
+});
+
+test("applyGraphQLErrors returns empty maps for non-bridge errors", () => {
+  const { per, global } = applyGraphQLErrors({ x: field.text() }, new Error("network"));
+  expect(per).toEqual({});
+  expect(global).toBeNull();
+});
+
+test("vesicleFromMutation requires endpoint or fetch", () => {
+  expect(() => {
+    vesicleFromMutation({
+      mutation: "mutation {}",
+      fields: { name: field.text() },
+    });
+  }).toThrow("requires either `endpoint` or `fetch`");
 });
 
 test("useVesicleAction keeps previous state when the action throws", async () => {
