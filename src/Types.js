@@ -71,6 +71,7 @@ export type ActionFn<+TResult = mixed> = (
 export type ValidatorContext<F: FieldDescriptors> = {
   +values: FieldValues<F>,
   +touched: { +[name: $Keys<F>]: boolean },
+  +signal: AbortSignal,
 };
 
 export type ValidatorFn<F: FieldDescriptors> = (

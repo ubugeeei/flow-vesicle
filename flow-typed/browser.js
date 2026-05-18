@@ -32,6 +32,15 @@ declare class URL {
 
 declare class AbortSignal {
   aborted: boolean;
+  reason: mixed;
+  addEventListener(type: "abort", listener: () => void): void;
+  removeEventListener(type: "abort", listener: () => void): void;
+  throwIfAborted(): void;
+}
+
+declare class AbortController {
+  signal: AbortSignal;
+  abort(reason?: mixed): void;
 }
 
 declare class HTMLElement {
